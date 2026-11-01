@@ -18,11 +18,9 @@ services:
     build: ./agent
     volumes:
       - ./agent:/app
-    env_file:
-      - path: .env
-        required: false
     environment:
       KEELSON_API_URL: http://keelson-api:8000
+      ANTHROPIC_API_KEY:
     depends_on:
       keelson-api:
         condition: service_healthy

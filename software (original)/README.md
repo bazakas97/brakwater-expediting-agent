@@ -34,5 +34,5 @@ docker compose run --rm agent pytest
 
 ## Environment
 
-1. Copy `.env.example` to `.env` and add the LLM API key you were given. It is passed to the agent container.
+1. Set the LLM API key you were given in your shell before running the agent (PowerShell: `$env:ANTHROPIC_API_KEY = "..."`, bash: `export ANTHROPIC_API_KEY=...`). Compose passes it to the agent container; it is never written to a file.
 2. The API uses today as business date. All dates in the sandbox data are relative to it.

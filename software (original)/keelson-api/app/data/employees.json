@@ -1,0 +1,37 @@
+[
+  {
+    "employee_id": "E01",
+    "name": "Mark Dekker",
+    "initials": "MD",
+    "role": "Head of Purchasing and Logistics",
+    "email": "mark.dekker@brakwater.example"
+  },
+  {
+    "employee_id": "E02",
+    "name": "Linda Verhoeven",
+    "initials": "LV",
+    "role": "Buyer",
+    "email": "linda.verhoeven@brakwater.example"
+  },
+  {
+    "employee_id": "E03",
+    "name": "Youssef Amrani",
+    "initials": "YA",
+    "role": "Buyer",
+    "email": "youssef.amrani@brakwater.example"
+  },
+  {
+    "employee_id": "E04",
+    "name": "Sanne de Wit",
+    "initials": "SW",
+    "role": "Project manager",
+    "email": "sanne.dewit@brakwater.example"
+  },
+  {
+    "employee_id": "E05",
+    "name": "Joris Bakker",
+    "initials": "JB",
+    "role": "Project manager",
+    "email": "joris.bakker@brakwater.example"
+  }
+]

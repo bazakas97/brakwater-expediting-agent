@@ -1,0 +1,123 @@
+[
+  {
+    "supplier_id": "S01",
+    "name": "Aluprofiel Zeeland B.V.",
+    "country": "NL",
+    "language": "Dutch",
+    "contact_person": "Erik Vos",
+    "email": "verkoop@aluprofiel-zeeland.example",
+    "phone": "+31 113 000 101",
+    "category": "Aluminium plate and profiles",
+    "contact_policy": "Standard"
+  },
+  {
+    "supplier_id": "S02",
+    "name": "Marinetec Hydraulik GmbH",
+    "country": "DE",
+    "language": "German",
+    "contact_person": "Petra Lange",
+    "email": "vertrieb@marinetec-hydraulik.example",
+    "phone": "+49 40 000 202",
+    "category": "Steering and hydraulics",
+    "contact_policy": "Standard"
+  },
+  {
+    "supplier_id": "S03",
+    "name": "Nordmotor Marine AB",
+    "country": "SE",
+    "language": "English",
+    "contact_person": "Lars Holm",
+    "email": "orders@nordmotor-marine.example",
+    "phone": "+46 31 000 303",
+    "category": "Inboard engines",
+    "contact_policy": "Via project manager"
+  },
+  {
+    "supplier_id": "S04",
+    "name": "Dekline Coatings B.V.",
+    "country": "NL",
+    "language": "Dutch",
+    "contact_person": "Anouk Smit",
+    "email": "orders@dekline.example",
+    "phone": "+31 10 000 404",
+    "category": "Paint and antifouling",
+    "contact_policy": "Standard"
+  },
+  {
+    "supplier_id": "S05",
+    "name": "Seaglass Windows Ltd",
+    "country": "GB",
+    "language": "English",
+    "contact_person": "Tom Reeves",
+    "email": "sales@seaglass-windows.example",
+    "phone": "+44 23 000 505",
+    "category": "Windows and hatches",
+    "contact_policy": "Standard"
+  },
+  {
+    "supplier_id": "S06",
+    "name": "Kabelwerk Rhein GmbH",
+    "country": "DE",
+    "language": "German",
+    "contact_person": "Juergen Weber",
+    "email": "auftrag@kabelwerk-rhein.example",
+    "phone": "+49 221 000 606",
+    "category": "Cabling and harnesses",
+    "contact_policy": "Standard"
+  },
+  {
+    "supplier_id": "S07",
+    "name": "Polarnav Electronics ApS",
+    "country": "DK",
+    "language": "English",
+    "contact_person": "Mette Friis",
+    "email": "sales@polarnav.example",
+    "phone": "+45 70 000 707",
+    "category": "Navigation electronics",
+    "contact_policy": "Via project manager"
+  },
+  {
+    "supplier_id": "S08",
+    "name": "Van Loon Bevestigingstechniek B.V.",
+    "country": "NL",
+    "language": "Dutch",
+    "contact_person": "Kees van Loon",
+    "email": "info@vanloon-bevestiging.example",
+    "phone": "+31 76 000 808",
+    "category": "Fasteners (stock)",
+    "contact_policy": "Standard"
+  },
+  {
+    "supplier_id": "S09",
+    "name": "Atlantic Fenders S.L.",
+    "country": "ES",
+    "language": "English",
+    "contact_person": "Carlos Ruiz",
+    "email": "export@atlanticfenders.example",
+    "phone": "+34 986 000 909",
+    "category": "Fenders and rubber profiles",
+    "contact_policy": "Standard"
+  },
+  {
+    "supplier_id": "S10",
+    "name": "Helmstad Propellers B.V.",
+    "country": "NL",
+    "language": "Dutch",
+    "contact_person": "Bram Helmstad",
+    "email": "verkoop@helmstad.example",
+    "phone": "+31 184 000 110",
+    "category": "Propellers and shafts",
+    "contact_policy": "Standard"
+  },
+  {
+    "supplier_id": "S11",
+    "name": "Brouwer Interieurbouw",
+    "country": "NL",
+    "language": "Dutch",
+    "contact_person": "Ilse Brouwer",
+    "email": "ilse@brouwer-interieur.example",
+    "phone": "+31 111 000 111",
+    "category": "Interior joinery",
+    "contact_policy": "Standard"
+  }
+]

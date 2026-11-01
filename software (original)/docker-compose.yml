@@ -1,0 +1,28 @@
+services:
+  keelson-api:
+    build: ./keelson-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./keelson-api:/srv
+    environment:
+      # Optional: pin the business date, for example KEELSON_TODAY=2026-10-12
+      KEELSON_TODAY: ${KEELSON_TODAY:-}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  agent:
+    build: ./agent
+    volumes:
+      - ./agent:/app
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      KEELSON_API_URL: http://keelson-api:8000
+    depends_on:
+      keelson-api:
+        condition: service_healthy

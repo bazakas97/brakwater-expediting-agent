@@ -1,0 +1,32 @@
+[
+  {
+    "project": "BB-2604",
+    "description": "Harbour service boat 11 m",
+    "project_manager_id": "E04",
+    "customer_delivery_date": "2026-12-11"
+  },
+  {
+    "project": "BB-2607",
+    "description": "Aluminium workboat 9 m",
+    "project_manager_id": "E05",
+    "customer_delivery_date": "2027-01-22"
+  },
+  {
+    "project": "BB-2609",
+    "description": "Patrol RIB 8 m",
+    "project_manager_id": "E04",
+    "customer_delivery_date": "2027-02-26"
+  },
+  {
+    "project": "BB-2611",
+    "description": "Survey vessel 13 m",
+    "project_manager_id": "E05",
+    "customer_delivery_date": "2027-04-16"
+  },
+  {
+    "project": "STOCK",
+    "description": "General stock",
+    "project_manager_id": null,
+    "customer_delivery_date": null
+  }
+]

@@ -21,6 +21,8 @@ services:
     environment:
       KEELSON_API_URL: http://keelson-api:8000
       ANTHROPIC_API_KEY:
+      LLM_MODE:
+      ANTHROPIC_MODEL:
     depends_on:
       keelson-api:
         condition: service_healthy

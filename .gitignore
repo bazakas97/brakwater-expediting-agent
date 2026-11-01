@@ -1,0 +1,15 @@
+# macOS metadata files
+._*
+
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Test cache
+.pytest_cache/
+
+# Secrets
+.env
+
+# Generated output
+output/

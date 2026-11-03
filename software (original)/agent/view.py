@@ -70,7 +70,7 @@ def _wrapped(text: str) -> str:
     return "<br>".join(html.escape(line) for line in textwrap.wrap(text, HOVER_WIDTH))
 
 
-def hover_text(order: dict) -> str:
+def hover_text(order: dict, review_status: str | None = None) -> str:
     """The hover box of one dot. Text from the ERP is escaped, only our own <b> and <br> are HTML."""
     flags = ", ".join(order["flags"]) or "none"
     lines = [
@@ -78,6 +78,10 @@ def hover_text(order: dict) -> str:
         f"Delivery: {order['delivery_date']}",
         f"Flags: {html.escape(flags)}",
         f"Action: {order['action']}",
+    ]
+    if review_status:
+        lines.append(f"Review: {review_status}")
+    lines += [
         f"Reason: {_wrapped(order['reason'])}",
         f"Memo: {_wrapped(order['memo']) or '(none)'}",
     ]

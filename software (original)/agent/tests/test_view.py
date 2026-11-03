@@ -120,6 +120,11 @@ def test_hover_text_escapes_html_from_the_erp():
     assert "&lt;script&gt;" in text
 
 
+def test_hover_text_shows_the_review_status_only_when_given():
+    assert "Review: approved" in hover_text(order("PO26-1"), "approved")
+    assert "Review:" not in hover_text(order("PO26-1"))
+
+
 def test_hover_text_for_empty_memo():
     assert "Memo: (none)" in hover_text(order("PO26-1"))
 

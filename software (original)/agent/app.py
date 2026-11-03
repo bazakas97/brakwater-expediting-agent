@@ -1,7 +1,8 @@
-"""The page. It ONLY reads data/decisions.json and draws it.
+"""The page. It reads data/decisions.json and shows what a buyer must review.
 
-Streamlit runs this whole script again on every click, so it must never call the LLM or the API.
-All exact logic (sorting, stacking, counting) lives in view.py, which has tests.
+Approve / Reject is saved to data/reviews.json by reviews.py: that is the ONLY thing this page writes.
+It never calls the LLM, the ERP or email. Streamlit runs this whole script again on every click,
+so all exact logic lives in view.py and reviews.py, which have tests.
 
 Run:  docker compose up app     then open http://localhost:8501
 """
@@ -12,6 +13,8 @@ from pathlib import Path
 import plotly.graph_objects as go
 import streamlit as st
 
+from reviews import (APPROVED, REJECTED, describe_review, latest_by_po, load_reviews, make_review, orders_to_review,
+                     progress, save_review, statuses)
 from view import (ACTIONS, MARKER_SIZE_PX, describe_age, due_soon_end, hover_text, is_stale, min_gap_days,
                   sort_orders, stack_levels, summary_line, x_range)
 
@@ -26,20 +29,32 @@ STYLE = {
 }
 
 
-def timeline(orders: list[dict], today: date) -> go.Figure:
+def timeline(orders: list[dict], today: date, status_by_po: dict[str, str]) -> go.Figure:
+    """One dot per order. A hollow dot is an order with a valid review (the shape stays the same)."""
     stacked = stack_levels(orders, min_gap_days(orders, today))
+    reviewed = {po for po, status in status_by_po.items() if status in (APPROVED, REJECTED)}
     fig = go.Figure()
     for action in ACTIONS:
         dots = [o for o in stacked if o["action"] == action]
-        fig.add_trace(go.Scatter(
-            x=[o["delivery_date"] for o in dots],
-            y=[o["level"] for o in dots],
-            mode="markers",
-            name=f"{STYLE[action]['label']} ({len(dots)})",
-            marker={"size": MARKER_SIZE_PX, "color": STYLE[action]["color"], "symbol": STYLE[action]["symbol"]},
-            text=[hover_text(o) for o in dots],
-            hovertemplate="%{text}<extra></extra>",
-        ))
+        style = STYLE[action]
+        for is_reviewed in (False, True):
+            part = [o for o in dots if (o["po_number"] in reviewed) == is_reviewed]
+            fig.add_trace(go.Scatter(
+                x=[o["delivery_date"] for o in part],
+                y=[o["level"] for o in part],
+                mode="markers",
+                name=f"{style['label']} ({len(dots)})",
+                legendgroup=action,
+                showlegend=not is_reviewed,  # one legend entry per action
+                marker={"size": MARKER_SIZE_PX, "color": style["color"],
+                        "symbol": style["symbol"] + ("-open" if is_reviewed else ""),
+                        "line": {"width": 2 if is_reviewed else 0, "color": style["color"]}},
+                text=[hover_text(o, status_by_po.get(o["po_number"])) for o in part],
+                hovertemplate="%{text}<extra></extra>",
+            ))
+    fig.add_trace(go.Scatter(x=[None], y=[None], mode="markers", name="hollow = reviewed", hoverinfo="skip",
+                             marker={"size": MARKER_SIZE_PX, "color": "#8a8985", "symbol": "circle-open",
+                                     "line": {"width": 2, "color": "#8a8985"}}))
     # Each label sits on the OUTSIDE of its line (today to the left, today + 14 days to the right),
     # above the plot, so the two labels can never overlap, even in a narrow window.
     for day, label, side in [(today, "today", "right"), (due_soon_end(today), "today + 14 days", "left")]:
@@ -53,6 +68,25 @@ def timeline(orders: list[dict], today: date) -> go.Figure:
     fig.update_layout(height=max(280, 140 + 38 * top_level), margin={"t": 30, "b": 10, "l": 10, "r": 10},
                       legend={"orientation": "h", "yanchor": "top", "y": -0.25}, hovermode="closest")
     return fig
+
+
+def review_card(order: dict, status: str, review: dict | None, built_at: str) -> None:
+    style = STYLE[order["action"]]
+    with st.container(border=True):
+        st.markdown(f"**{order['po_number']}** · {order['supplier_name']} · delivery {order['delivery_date']} · "
+                    f"**{style['label'].upper()}**")
+        st.text(f"Flags: {', '.join(order['flags']) or 'none'}")
+        st.text(f"Memo: {order['memo'] or '(none)'}")
+        st.text(f"Reason: {order['reason']}")
+        st.caption(describe_review(status, review))
+        with st.form(key=f"review_{order['po_number']}", clear_on_submit=True, border=False):
+            comment = st.text_input("Comment (optional)", key=f"comment_{order['po_number']}")
+            approve_column, reject_column, _ = st.columns([1, 1, 4])
+            approve = approve_column.form_submit_button("Approve", type="primary")
+            reject = reject_column.form_submit_button("Reject")
+        if approve or reject:
+            save_review(make_review(order, "approved" if approve else "rejected", comment, built_at))
+            st.rerun()
 
 
 def table_rows(orders: list[dict]) -> list[dict]:
@@ -79,20 +113,35 @@ def main() -> None:
         st.stop()
     data = json.loads(DATA_PATH.read_text(encoding="utf-8"))
     orders = data["orders"]
+    built_at = data["built_at"]
     today = date.fromisoformat(data["business_date"])
     now = datetime.now(timezone.utc)
 
-    st.caption(f"Data built {data['built_at'].replace('T', ' ')} ({describe_age(data['built_at'], now)}) · "
+    st.caption(f"Data built {built_at.replace('T', ' ')} ({describe_age(built_at, now)}) · "
                f"business date {today} · LLM mode: {data['llm_mode']}")
-    if is_stale(data["built_at"], now):
+    if is_stale(built_at, now):
         st.warning("This data is more than 24 hours old. Build it again: "
                    "docker compose run --rm agent python build_decisions.py")
     if data["llm_mode"] == "fake":
         st.info("Fake mode: the actions come from simple rules, not from the LLM.")
 
+    to_review = orders_to_review(orders)
+    reviews = load_reviews()
+    status_by_po = statuses(to_review, reviews, built_at)
+    done, total = progress(to_review, status_by_po)
+
     st.subheader(summary_line(orders))
-    st.plotly_chart(timeline(orders, today))
-    st.dataframe(table_rows(orders), hide_index=True)
+    st.progress(done / total if total else 1.0, text=f"Reviewed {done} of {total}")
+    st.plotly_chart(timeline(orders, today, status_by_po))
+
+    st.header(f"To review ({total})")
+    latest = latest_by_po(reviews)
+    for order in to_review:
+        review_card(order, status_by_po[order["po_number"]], latest.get(order["po_number"]), built_at)
+
+    no_action = [o for o in orders if o["action"] == "none"]
+    with st.expander(f"No action needed ({len(no_action)})"):
+        st.dataframe(table_rows(no_action), hide_index=True)
 
 
 main()

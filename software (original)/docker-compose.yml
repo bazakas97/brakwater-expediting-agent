@@ -27,7 +27,8 @@ services:
       keelson-api:
         condition: service_healthy
 
-  # The page. It only reads agent/data/decisions.json (the same ./agent folder the agent writes to).
+  # The page. It reads agent/data/decisions.json and writes ONLY agent/data/reviews.json
+  # (the same ./agent folder the agent writes to; the code and a test keep it to that one file).
   # On purpose: no API key, no LLM_MODE and no link to the API, so the page cannot call the LLM.
   app:
     build: ./agent

@@ -6,7 +6,8 @@ from datetime import date, datetime, timedelta
 
 from expediting import DUE_SOON_DAYS
 
-ACTIONS = ["escalate", "chase_supplier", "none"]  # most urgent first
+ACTIONS = ["escalate", "chase_supplier", "book_in", "wait", "none"]  # most urgent first
+LABELS = {"escalate": "escalate", "chase_supplier": "chase", "book_in": "book in", "wait": "wait", "none": "none"}
 STALE_AFTER_HOURS = 24
 HOVER_WIDTH = 60
 MARKER_SIZE_PX = 13
@@ -28,8 +29,8 @@ def count_actions(orders: list[dict]) -> dict[str, int]:
 
 def summary_line(orders: list[dict]) -> str:
     counts = count_actions(orders)
-    return (f"{len(orders)} open orders: {counts['escalate']} escalate, "
-            f"{counts['chase_supplier']} chase, {counts['none']} none")
+    parts = ", ".join(f"{counts[action]} {LABELS[action]}" for action in ACTIONS)
+    return f"{len(orders)} open orders: {parts}"
 
 
 def stack_levels(orders: list[dict], min_gap_days: int) -> list[dict]:

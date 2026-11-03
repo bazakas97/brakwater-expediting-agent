@@ -13,7 +13,7 @@ from view import sort_orders
 
 REVIEWS_PATH = Path(__file__).parent / "data" / "reviews.json"
 
-NEEDS_REVIEW = ["escalate", "chase_supplier"]
+NEEDS_REVIEW = ["escalate", "chase_supplier", "book_in", "wait"]  # everything except "none"
 VERDICTS = ["approved", "rejected"]
 
 PENDING = "pending"
@@ -23,7 +23,7 @@ OUTDATED = "outdated"
 
 
 def orders_to_review(orders: list[dict]) -> list[dict]:
-    """The orders a buyer must look at: escalate first, then chase_supplier, by delivery date."""
+    """The orders a buyer must look at: every action except "none", most urgent first, by delivery date."""
     return sort_orders([o for o in orders if o["action"] in NEEDS_REVIEW])
 
 

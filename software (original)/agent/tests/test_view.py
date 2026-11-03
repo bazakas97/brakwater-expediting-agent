@@ -2,7 +2,8 @@ from datetime import date, datetime, timedelta, timezone
 
 import pytest
 
-from view import (count_actions, describe_age, due_soon_end, hover_text, is_stale, min_gap_days, sort_orders,
+from decision import ACTIONS as DECISION_ACTIONS
+from view import (ACTIONS, LABELS, count_actions, describe_age, due_soon_end, hover_text, is_stale, min_gap_days, sort_orders,
                   stack_levels, summary_line, x_range)
 
 NOW = datetime(2026, 11, 3, 12, 0, tzinfo=timezone.utc)
@@ -29,9 +30,21 @@ def test_sort_with_unknown_action_fails_loudly():
 
 
 def test_count_and_summary_line():
-    orders = [order("A", "escalate"), order("B", "chase_supplier"), order("C", "chase_supplier"), order("D")]
-    assert count_actions(orders) == {"escalate": 1, "chase_supplier": 2, "none": 1}
-    assert summary_line(orders) == "4 open orders: 1 escalate, 2 chase, 1 none"
+    orders = [order("A", "escalate"), order("B", "chase_supplier"), order("C", "chase_supplier"), order("D"),
+              order("E", "book_in"), order("F", "wait"), order("G", "wait")]
+    assert count_actions(orders) == {"escalate": 1, "chase_supplier": 2, "book_in": 1, "wait": 2, "none": 1}
+    assert summary_line(orders) == "7 open orders: 1 escalate, 2 chase, 1 book in, 2 wait, 1 none"
+
+
+def test_sort_orders_all_five_actions_most_urgent_first():
+    actions = ["none", "wait", "book_in", "chase_supplier", "escalate"]
+    orders = [order(a, a) for a in actions]
+    assert [o["action"] for o in sort_orders(orders)] == ["escalate", "chase_supplier", "book_in", "wait", "none"]
+
+
+def test_view_and_decision_know_the_same_actions():
+    assert set(ACTIONS) == set(DECISION_ACTIONS)
+    assert set(LABELS) == set(ACTIONS)
 
 
 def levels(orders: list[dict], gap: int) -> dict[str, int]:

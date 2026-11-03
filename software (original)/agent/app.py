@@ -20,12 +20,16 @@ from view import (ACTIONS, MARKER_SIZE_PX, describe_age, due_soon_end, hover_tex
 
 DATA_PATH = Path(__file__).parent / "data" / "decisions.json"
 
-# Colors: the status steps of the dataviz palette (red, orange) and a neutral grey for "none".
-# Color is not the only signal: every action also has its own shape and a legend entry.
+# Colors: red and orange are the status steps of the dataviz palette, blue and aqua come from the
+# categorical palette, and "none" is a darker neutral grey that recedes. Color is never the only
+# signal: every action has its own shape and a legend entry (the validator asks for this, because
+# aqua and orange are hard to tell apart with some forms of color blindness).
 STYLE = {
     "escalate": {"label": "escalate", "color": "#d03b3b", "symbol": "diamond"},
     "chase_supplier": {"label": "chase supplier", "color": "#ec835a", "symbol": "square"},
-    "none": {"label": "none", "color": "#8a8985", "symbol": "circle"},
+    "book_in": {"label": "book in", "color": "#2a78d6", "symbol": "triangle-up"},
+    "wait": {"label": "wait", "color": "#1baf7a", "symbol": "cross"},
+    "none": {"label": "none", "color": "#767571", "symbol": "circle"},
 }
 
 

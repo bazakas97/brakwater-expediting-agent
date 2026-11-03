@@ -18,9 +18,10 @@ def order(po: str, action: str = "escalate", delivery_date: str = "2026-11-10") 
 
 # --- which orders need a review ---
 
-def test_only_escalate_and_chase_need_review_most_urgent_first():
-    orders = [order("N", "none"), order("C", "chase_supplier", "2026-11-01"), order("E", "escalate", "2026-12-01")]
-    assert [o["po_number"] for o in orders_to_review(orders)] == ["E", "C"]
+def test_every_action_except_none_needs_review_most_urgent_first():
+    orders = [order("N", "none"), order("W", "wait", "2026-11-02"), order("B", "book_in", "2026-11-03"),
+              order("C", "chase_supplier", "2026-11-01"), order("E", "escalate", "2026-12-01")]
+    assert [o["po_number"] for o in orders_to_review(orders)] == ["E", "C", "B", "W"]
 
 
 # --- making and saving reviews ---

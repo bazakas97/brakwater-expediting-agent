@@ -4,7 +4,7 @@ import pytest
 
 import llm
 from context import NO_CUSTOMER_DATE
-from decision import MAX_REASON_WORDS, Decision
+from decision import ACTIONS, MAX_REASON_WORDS, Decision
 from expediting import DUE_SOON, OVERDUE
 
 TODAY = date(2026, 11, 2)
@@ -126,6 +126,36 @@ def test_too_long_reason_twice_falls_back_and_is_not_truncated(real_mode, monkey
     decision = llm.decide(order("PO11"), TODAY, CONTEXT)
     assert decision.action == "escalate"
     assert decision.reason == llm.INVALID_OUTPUT_REASON
+
+
+# --- the five actions ---
+
+def test_decision_accepts_all_five_actions_and_nothing_else():
+    for action in ["none", "wait", "book_in", "chase_supplier", "escalate"]:
+        assert Decision(po_number="PO1", action=action, reason="r").action == action
+    with pytest.raises(ValueError):
+        Decision(po_number="PO1", action="cancel_order", reason="r")
+
+
+def test_the_model_tool_offers_exactly_the_five_actions():
+    assert llm.DECISION_TOOL["input_schema"]["properties"]["action"]["enum"] == list(ACTIONS)
+    assert set(ACTIONS) == {"none", "wait", "book_in", "chase_supplier", "escalate"}
+
+
+def test_the_prompt_explains_every_action():
+    for action in ACTIONS:
+        assert f"- {action}:" in llm.SYSTEM_PROMPT
+
+
+def test_the_prompt_tells_the_model_about_via_project_manager():
+    assert "Via project manager" in llm.SYSTEM_PROMPT
+
+
+def test_real_mode_accepts_book_in_and_wait_from_the_model(real_mode, monkeypatch):
+    for action in ["book_in", "wait"]:
+        monkeypatch.setattr(llm, "_call_llm", lambda o, today, context, error=None, a=action:
+                            {"action": a, "reason": "Delivered Friday, not booked in."})
+        assert llm.decide(order("PO12"), TODAY, CONTEXT).action == action
 
 
 # --- the Decision model ---

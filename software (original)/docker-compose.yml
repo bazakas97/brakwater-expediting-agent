@@ -26,3 +26,15 @@ services:
     depends_on:
       keelson-api:
         condition: service_healthy
+
+  # The page. It only reads agent/data/decisions.json (the same ./agent folder the agent writes to).
+  # On purpose: no API key, no LLM_MODE and no link to the API, so the page cannot call the LLM.
+  app:
+    build: ./agent
+    command: streamlit run app.py --server.port 8501 --server.address 0.0.0.0 --server.headless true
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./agent:/app
+    environment:
+      STREAMLIT_BROWSER_GATHER_USAGE_STATS: "false"

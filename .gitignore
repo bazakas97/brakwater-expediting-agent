@@ -13,3 +13,6 @@ __pycache__/
 
 # Generated output
 output/
+
+# Built by build_decisions.py (agent only, not the sandbox data in keelson-api)
+/software (original)/agent/data/

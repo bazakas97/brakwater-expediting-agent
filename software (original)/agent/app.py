@@ -41,6 +41,12 @@ def timeline(orders: list[dict], today: date, status_by_po: dict[str, str]) -> g
     for action in ACTIONS:
         dots = [o for o in stacked if o["action"] == action]
         style = STYLE[action]
+        # The legend entry has a trace of its own, without dots. If it belonged to the "not reviewed"
+        # dots, it would vanish as soon as every dot of this action is reviewed. The two traces with
+        # the dots are in the same legendgroup, so a click on the legend still hides all of them.
+        fig.add_trace(go.Scatter(x=[None], y=[None], mode="markers", name=f"{style['label']} ({len(dots)})",
+                                 legendgroup=action, hoverinfo="skip",
+                                 marker={"size": MARKER_SIZE_PX, "color": style["color"], "symbol": style["symbol"]}))
         for is_reviewed in (False, True):
             part = [o for o in dots if (o["po_number"] in reviewed) == is_reviewed]
             fig.add_trace(go.Scatter(
@@ -49,7 +55,7 @@ def timeline(orders: list[dict], today: date, status_by_po: dict[str, str]) -> g
                 mode="markers",
                 name=f"{style['label']} ({len(dots)})",
                 legendgroup=action,
-                showlegend=not is_reviewed,  # one legend entry per action
+                showlegend=False,
                 marker={"size": MARKER_SIZE_PX, "color": style["color"],
                         "symbol": style["symbol"] + ("-open" if is_reviewed else ""),
                         "line": {"width": 2 if is_reviewed else 0, "color": style["color"]}},
@@ -167,4 +173,5 @@ def main() -> None:
         st.dataframe(table_rows(no_action), hide_index=True)
 
 
-main()
+if __name__ == "__main__":  # Streamlit runs the script as __main__; a test can import timeline() without it
+    main()

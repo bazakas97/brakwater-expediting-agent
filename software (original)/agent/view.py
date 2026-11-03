@@ -89,6 +89,23 @@ def hover_text(order: dict, review_status: str | None = None) -> str:
     return "<br>".join(lines)
 
 
+FIELD_LABELS = {"confirmed_delivery_date": "Confirmed delivery date", "order_confirmation_received": "Order confirmation received"}
+
+
+def _show_value(value) -> str:
+    if value is None:
+        return "(empty)"
+    if isinstance(value, bool):
+        return "yes" if value else "no"
+    return str(value)
+
+
+def describe_proposal(proposal: dict) -> str:
+    """One line for a buyer, e.g. 'Confirmed delivery date: 2026-10-31 -> 2026-11-27'."""
+    label = FIELD_LABELS[proposal["field"]]
+    return f"{label}: {_show_value(proposal['current_value'])} -> {_show_value(proposal['proposed_value'])}"
+
+
 def describe_age(built_at: str, now: datetime) -> str:
     """How old the file is, e.g. "12 min ago". Both times must have a time zone."""
     seconds = int((now - datetime.fromisoformat(built_at)).total_seconds())

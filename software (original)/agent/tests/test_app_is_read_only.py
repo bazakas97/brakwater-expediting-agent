@@ -6,7 +6,7 @@ from pathlib import Path
 AGENT = Path(__file__).parent.parent
 
 FORBIDDEN_IMPORTS = {"llm", "anthropic", "openai", "keelson_client", "httpx", "requests", "decision", "context",
-                     "triage", "build_decisions", "smtplib", "email", "socket", "urllib"}
+                     "triage", "build_decisions", "memo_facts", "erp_proposals", "smtplib", "email", "socket", "urllib"}
 WRITE_CALLS = {"open", "write_text", "write_bytes", "dump", "rename", "remove", "unlink", "mkdir"}
 FILE_MODULES = {"os", "shutil", "tempfile"}  # how os.replace or copying would sneak in
 

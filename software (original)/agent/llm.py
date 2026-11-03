@@ -88,11 +88,11 @@ def _decide_real(order: dict, today: date, context: dict) -> Decision:
         try:
             return Decision.model_validate({**raw, "po_number": order["po_number"]})
         except (ValueError, TypeError) as e:  # pydantic's ValidationError is a ValueError
-            error = _explain(e)  # the retry tells the model what was wrong
+            error = explain_error(e)  # the retry tells the model what was wrong
     return Decision(po_number=order["po_number"], action="escalate", reason=INVALID_OUTPUT_REASON)
 
 
-def _explain(error: Exception) -> str:
+def explain_error(error: Exception) -> str:
     """A short description of why an answer was rejected, e.g. 'reason: reason has 27 words, max is 20'."""
     if isinstance(error, ValidationError):
         return "; ".join(f"{'.'.join(map(str, e['loc']))}: {e['msg'].removeprefix('Value error, ')}"

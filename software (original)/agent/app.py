@@ -15,7 +15,7 @@ import streamlit as st
 
 from reviews import (APPROVED, REJECTED, describe_review, latest_by_po, load_reviews, make_review, orders_to_review,
                      progress, save_review, statuses)
-from view import (ACTIONS, MARKER_SIZE_PX, describe_age, due_soon_end, hover_text, is_stale, min_gap_days,
+from view import (ACTIONS, MARKER_SIZE_PX, describe_age, describe_proposal, due_soon_end, hover_text, is_stale, min_gap_days,
                   sort_orders, stack_levels, summary_line, x_range)
 
 DATA_PATH = Path(__file__).parent / "data" / "decisions.json"
@@ -82,6 +82,13 @@ def review_card(order: dict, status: str, review: dict | None, built_at: str) ->
         st.text(f"Flags: {', '.join(order['flags']) or 'none'}")
         st.text(f"Memo: {order['memo'] or '(none)'}")
         st.text(f"Reason: {order['reason']}")
+        proposals = order.get("erp_proposals", [])  # older files have none
+        for proposal in proposals:
+            st.markdown(f"**Proposed ERP update:** {describe_proposal(proposal)}")
+            details = " ".join(part for part in [proposal["note"], f"Memo: \"{proposal['evidence']}\""] if part)
+            st.caption(details)
+        if proposals:
+            st.caption("Enter this in the ERP by hand. This system never writes to the ERP.")
         st.caption(describe_review(status, review))
         with st.form(key=f"review_{order['po_number']}", clear_on_submit=True, border=False):
             comment = st.text_input("Comment (optional)", key=f"comment_{order['po_number']}")

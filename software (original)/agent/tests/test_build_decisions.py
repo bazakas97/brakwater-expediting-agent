@@ -24,7 +24,7 @@ def test_record_has_all_the_fields_the_page_needs():
     assert record == {
         "po_number": "PO1", "supplier_name": "Acme", "project": "BB-2604", "delivery_date": "2026-11-10",
         "flags": ["DUE_WITHIN_14_DAYS"], "memo": "a memo", "action": "chase_supplier", "reason": "routine",
-        "source": "llm",
+        "source": "llm", "erp_proposals": [],
     }
 
 
@@ -64,3 +64,19 @@ def test_write_decisions_replaces_the_old_file_and_leaves_no_temp_file(tmp_path)
     write_decisions([to_record(order("PO1"), "none", "r", "llm")], date(2026, 11, 4), "real", path)
     assert json.loads(path.read_text(encoding="utf-8"))["llm_mode"] == "real"
     assert [p.name for p in tmp_path.iterdir()] == ["decisions.json"]
+
+
+PROPOSAL = {"field": "confirmed_delivery_date", "current_value": "2026-10-31", "proposed_value": "2026-11-27",
+            "evidence": "wk 48", "note": None}
+
+
+def test_the_record_carries_the_erp_proposals():
+    assert to_record(order("PO1"), "wait", "r", "llm", [PROPOSAL])["erp_proposals"] == [PROPOSAL]
+
+
+def test_proposals_are_asked_only_for_the_orders_that_go_to_the_llm():
+    asked = []
+    records = build_records([order("PO1")], [triage_none("PO3")], decide_escalate,
+                            lambda o: asked.append(o["po_number"]) or [PROPOSAL])
+    assert asked == ["PO1"]
+    assert {r["po_number"]: r["erp_proposals"] for r in records} == {"PO1": [PROPOSAL], "PO3": []}

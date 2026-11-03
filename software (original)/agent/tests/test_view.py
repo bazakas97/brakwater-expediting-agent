@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta, timezone
 import pytest
 
 from decision import ACTIONS as DECISION_ACTIONS
-from view import (ACTIONS, LABELS, count_actions, describe_age, due_soon_end, hover_text, is_stale, min_gap_days, sort_orders,
+from view import (ACTIONS, LABELS, count_actions, describe_age, describe_proposal, due_soon_end, hover_text, is_stale, min_gap_days, sort_orders,
                   stack_levels, summary_line, x_range)
 
 NOW = datetime(2026, 11, 3, 12, 0, tzinfo=timezone.utc)
@@ -154,3 +154,12 @@ def test_describe_age():
 def test_is_stale_after_24_hours():
     assert not is_stale((NOW - timedelta(hours=23, minutes=59)).isoformat(), NOW)
     assert is_stale((NOW - timedelta(hours=24)).isoformat(), NOW)
+
+
+def test_describe_proposal_for_a_date_a_missing_date_and_a_confirmation():
+    date_change = {"field": "confirmed_delivery_date", "current_value": "2026-10-31", "proposed_value": "2026-11-27"}
+    assert describe_proposal(date_change) == "Confirmed delivery date: 2026-10-31 -> 2026-11-27"
+    from_empty = {**date_change, "current_value": None}
+    assert describe_proposal(from_empty) == "Confirmed delivery date: (empty) -> 2026-11-27"
+    confirmation = {"field": "order_confirmation_received", "current_value": False, "proposed_value": True}
+    assert describe_proposal(confirmation) == "Order confirmation received: no -> yes"

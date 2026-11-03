@@ -15,7 +15,7 @@ import streamlit as st
 
 from reviews import (APPROVED, REJECTED, describe_review, latest_by_po, load_reviews, make_review, orders_to_review,
                      progress, save_review, statuses)
-from view import (ACTIONS, MARKER_SIZE_PX, describe_age, describe_proposal, due_soon_end, hover_text, is_stale, min_gap_days,
+from view import (ACTIONS, MARKER_SIZE_PX, describe_age, describe_proposal, describe_recipient, due_soon_end, hover_text, is_stale, min_gap_days,
                   sort_orders, stack_levels, summary_line, x_range)
 
 DATA_PATH = Path(__file__).parent / "data" / "decisions.json"
@@ -89,6 +89,18 @@ def review_card(order: dict, status: str, review: dict | None, built_at: str) ->
             st.caption(details)
         if proposals:
             st.caption("Enter this in the ERP by hand. This system never writes to the ERP.")
+        draft = order.get("draft_email")  # older files have none
+        if draft:
+            with st.expander("Draft email"):
+                st.markdown(f"**To:** {describe_recipient(draft)}")
+                if draft["note"]:
+                    st.caption(draft["note"])
+                if draft["problem"]:
+                    st.warning(draft["problem"])
+                else:
+                    st.markdown(f"**Subject:** {draft['subject']}")
+                    st.code(draft["body"], language=None, wrap_lines=True)  # the code box has a copy button
+                    st.caption("Copy it into your own email and change what you like. This system never sends email.")
         st.caption(describe_review(status, review))
         with st.form(key=f"review_{order['po_number']}", clear_on_submit=True, border=False):
             comment = st.text_input("Comment (optional)", key=f"comment_{order['po_number']}")

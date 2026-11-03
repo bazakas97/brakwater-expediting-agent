@@ -3,7 +3,7 @@ from datetime import date, datetime, timedelta, timezone
 import pytest
 
 from decision import ACTIONS as DECISION_ACTIONS
-from view import (ACTIONS, LABELS, count_actions, describe_age, describe_proposal, due_soon_end, hover_text, is_stale, min_gap_days, sort_orders,
+from view import (ACTIONS, LABELS, count_actions, describe_age, describe_proposal, describe_recipient, due_soon_end, hover_text, is_stale, min_gap_days, sort_orders,
                   stack_levels, summary_line, x_range)
 
 NOW = datetime(2026, 11, 3, 12, 0, tzinfo=timezone.utc)
@@ -163,3 +163,10 @@ def test_describe_proposal_for_a_date_a_missing_date_and_a_confirmation():
     assert describe_proposal(from_empty) == "Confirmed delivery date: (empty) -> 2026-11-27"
     confirmation = {"field": "order_confirmation_received", "current_value": False, "proposed_value": True}
     assert describe_proposal(confirmation) == "Order confirmation received: no -> yes"
+
+
+def test_describe_recipient_shows_name_address_kind_and_language():
+    supplier = {"name": "Petra Lange", "email": "vertrieb@marinetec.example", "kind": "supplier", "language": "German"}
+    assert describe_recipient(supplier) == "Petra Lange <vertrieb@marinetec.example> (supplier, German)"
+    manager = {"name": "Sanne de Wit", "email": "sanne@brakwater.example", "kind": "project_manager", "language": "Dutch"}
+    assert describe_recipient(manager) == "Sanne de Wit <sanne@brakwater.example> (project manager, Dutch)"

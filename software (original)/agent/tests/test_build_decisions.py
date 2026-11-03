@@ -1,8 +1,9 @@
 import json
 from datetime import date, datetime, timezone
 
-from build_decisions import build_records, to_record, write_decisions
+from build_decisions import build_records, draft_record, to_record, write_decisions
 from decision import Decision
+from email_drafts import Draft
 
 
 def order(po: str, confirmed: str | None = None, **extra) -> dict:
@@ -24,7 +25,7 @@ def test_record_has_all_the_fields_the_page_needs():
     assert record == {
         "po_number": "PO1", "supplier_name": "Acme", "project": "BB-2604", "delivery_date": "2026-11-10",
         "flags": ["DUE_WITHIN_14_DAYS"], "memo": "a memo", "action": "chase_supplier", "reason": "routine",
-        "source": "llm", "erp_proposals": [],
+        "source": "llm", "erp_proposals": [], "draft_email": None,
     }
 
 
@@ -80,3 +81,32 @@ def test_proposals_are_asked_only_for_the_orders_that_go_to_the_llm():
                             lambda o: asked.append(o["po_number"]) or [PROPOSAL])
     assert asked == ["PO1"]
     assert {r["po_number"]: r["erp_proposals"] for r in records} == {"PO1": [PROPOSAL], "PO3": []}
+
+
+DRAFT = Draft(subject="Reminder PO1", body="Dear Tom,\n\nPO1\n\nKind regards,\nLinda")
+RECIPIENT = {"kind": "supplier", "purpose": "reminder_to_supplier", "name": "Tom", "email": "tom@example",
+             "language": "English", "note": None}
+
+
+def test_draft_record_keeps_the_recipient_and_the_text():
+    record = draft_record(RECIPIENT, DRAFT)
+    assert record["email"] == "tom@example" and record["language"] == "English"
+    assert (record["subject"], record["problem"]) == ("Reminder PO1", None)
+
+
+def test_a_missing_draft_is_kept_as_a_problem_with_the_recipient_so_the_buyer_sees_it():
+    record = draft_record(RECIPIENT, None)
+    assert record["email"] == "tom@example" and record["subject"] == "" and record["body"] == ""
+    assert "Write this email yourself" in record["problem"]
+
+
+def test_drafts_are_asked_only_for_the_orders_that_go_to_the_llm_and_end_up_in_the_record():
+    asked = []
+
+    def draft_for(order, decision):
+        asked.append((order["po_number"], decision.action))
+        return draft_record(RECIPIENT, DRAFT)
+
+    records = build_records([order("PO1")], [triage_none("PO3")], decide_escalate, draft_for=draft_for)
+    assert asked == [("PO1", "escalate")]
+    assert {r["po_number"]: r["draft_email"] is not None for r in records} == {"PO1": True, "PO3": False}

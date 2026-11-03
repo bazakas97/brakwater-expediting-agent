@@ -106,6 +106,15 @@ def describe_proposal(proposal: dict) -> str:
     return f"{label}: {_show_value(proposal['current_value'])} -> {_show_value(proposal['proposed_value'])}"
 
 
+RECIPIENT_KINDS = {"supplier": "supplier", "project_manager": "project manager",
+                   "head_of_purchasing": "head of purchasing"}
+
+
+def describe_recipient(draft: dict) -> str:
+    """Who gets the draft, e.g. 'Petra Lange <vertrieb@marinetec-hydraulik.example> (supplier, German)'."""
+    return f"{draft['name']} <{draft['email']}> ({RECIPIENT_KINDS[draft['kind']]}, {draft['language']})"
+
+
 def describe_age(built_at: str, now: datetime) -> str:
     """How old the file is, e.g. "12 min ago". Both times must have a time zone."""
     seconds = int((now - datetime.fromisoformat(built_at)).total_seconds())

@@ -16,6 +16,15 @@ the next version in [ROADMAP_V2.md](ROADMAP_V2.md).
 -->
 > _Screenshot: to be added._
 
+## Versions
+
+| Version | Status | Where |
+|---|---|---|
+| **v1** | done: the pipeline, the page, reviews, draft emails, ERP proposals, fake and real mode | branch `master` |
+| **v2** | in progress: evaluation, orchestration, tracing, retrieval, data pipelines, monitoring, deployment | branch `v2`, plan in [ROADMAP_V2.md](ROADMAP_V2.md), one pull request per step |
+
+What changed in each version: [CHANGELOG.md](CHANGELOG.md).
+
 ## The problem
 
 The purchasing team spends hours each week tracking open purchase orders: they run an export, read the

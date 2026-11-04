@@ -3,9 +3,10 @@ from datetime import datetime, timezone
 
 import pytest
 
+import paths
 import reviews
 from reviews import (APPROVED, OUTDATED, PENDING, REJECTED, describe_review, latest_by_po, load_reviews,
-                     make_review, orders_to_review, progress, save_review, status_for, statuses)
+                     make_review, orders_to_review, progress, save_review, status_for, statuses, view_is_outdated)
 
 BUILD_1 = "2026-11-03T12:00:00+00:00"
 BUILD_2 = "2026-11-04T09:00:00+00:00"
@@ -57,8 +58,29 @@ def test_saving_writes_only_the_reviews_file(tmp_path):
 
 
 def test_the_default_path_is_data_reviews_json():
-    assert reviews.REVIEWS_PATH.name == "reviews.json"
-    assert reviews.REVIEWS_PATH.parent.name == "data"
+    assert paths.REVIEWS_PATH.name == "reviews.json"
+    assert paths.REVIEWS_PATH.parent.name == "data"
+
+
+def test_the_default_paths_are_read_when_needed_so_a_test_can_replace_them(tmp_path, monkeypatch):
+    monkeypatch.setattr(paths, "REVIEWS_PATH", tmp_path / "reviews.json")
+    save_review(make_review(order("PO1"), "approved", "", BUILD_1, NOW))
+    assert [r["po_number"] for r in load_reviews()] == ["PO1"]
+    assert [p.name for p in tmp_path.iterdir()] == ["reviews.json"]
+
+
+# --- a tab that was opened before a rebuild ---
+
+def test_a_tab_that_opened_before_the_rebuild_is_outdated():
+    assert view_is_outdated(BUILD_1, BUILD_2)
+
+
+def test_a_tab_on_the_current_build_is_not_outdated():
+    assert not view_is_outdated(BUILD_2, BUILD_2)
+
+
+def test_a_tab_that_opens_the_page_for_the_first_time_is_not_outdated():
+    assert not view_is_outdated(None, BUILD_2)
 
 
 # --- matching reviews to the current decisions ---

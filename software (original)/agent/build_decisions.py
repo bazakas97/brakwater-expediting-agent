@@ -11,6 +11,7 @@ import os
 from datetime import date, datetime, timezone
 from pathlib import Path
 
+import paths
 from context import NO_CUSTOMER_DATE, build_lookups, context_for
 from email_drafts import draft_facts, write_draft
 from erp_proposals import build_proposals
@@ -20,8 +21,6 @@ from llm import decide, get_mode
 from memo_facts import extract_facts
 from recipients import find_recipient, sender_name
 from triage import split_orders
-
-DATA_PATH = Path(__file__).parent / "data" / "decisions.json"
 
 
 def to_record(order: dict, action: str, reason: str, source: str, erp_proposals: list[dict] | None = None,
@@ -68,8 +67,9 @@ def build_records(for_llm: list[dict], no_action: list[dict], decide_one, propos
 
 
 def write_decisions(records: list[dict], business_date: date, llm_mode: str,
-                    path: Path = DATA_PATH, now: datetime | None = None) -> None:
+                    path: Path | None = None, now: datetime | None = None) -> None:
     """Write the file in one go: the page never sees a half-written file."""
+    path = path or paths.DECISIONS_PATH
     now = now or datetime.now(timezone.utc)
     payload = {
         "built_at": now.isoformat(timespec="seconds"),
@@ -122,7 +122,7 @@ def main() -> None:
     write_decisions(records, today, get_mode())
     with_proposals = [r for r in records if r["erp_proposals"]]
     drafts = [r["draft_email"] for r in records if r["draft_email"]]
-    print(f"Wrote {len(records)} orders to {DATA_PATH}")
+    print(f"Wrote {len(records)} orders to {paths.DECISIONS_PATH}")
     print(f"ERP proposals: {sum(len(r['erp_proposals']) for r in with_proposals)} for {len(with_proposals)} orders")
     print(f"Draft emails: {len(drafts)}, of which {sum(1 for d in drafts if d['problem'])} without a valid text")
     if unreadable:

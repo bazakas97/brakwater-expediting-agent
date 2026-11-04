@@ -8,17 +8,15 @@ Run:  docker compose up app     then open http://localhost:8501
 """
 import json
 from datetime import date, datetime, timezone
-from pathlib import Path
 
 import plotly.graph_objects as go
 import streamlit as st
 
+import paths
 from reviews import (APPROVED, REJECTED, describe_review, latest_by_po, load_reviews, make_review, orders_to_review,
-                     progress, save_review, statuses)
+                     progress, save_review, statuses, view_is_outdated)
 from view import (ACTIONS, MARKER_SIZE_PX, describe_age, describe_proposal, describe_recipient, due_soon_end, hover_text, is_stale, min_gap_days,
                   sort_orders, stack_levels, summary_line, x_range)
-
-DATA_PATH = Path(__file__).parent / "data" / "decisions.json"
 
 # Colors: red and orange are the status steps of the dataviz palette, blue and aqua come from the
 # categorical palette, and "none" is a darker neutral grey that recedes. Color is never the only
@@ -80,7 +78,8 @@ def timeline(orders: list[dict], today: date, status_by_po: dict[str, str]) -> g
     return fig
 
 
-def review_card(order: dict, status: str, review: dict | None, built_at: str) -> None:
+def review_card(order: dict, status: str, review: dict | None, built_at: str, save_allowed: bool = True) -> bool:
+    """One card. Returns True when a click on Approve / Reject was NOT saved (see view_is_outdated)."""
     style = STYLE[order["action"]]
     with st.container(border=True):
         st.markdown(f"**{order['po_number']}** · {order['supplier_name']} · delivery {order['delivery_date']} · "
@@ -114,8 +113,11 @@ def review_card(order: dict, status: str, review: dict | None, built_at: str) ->
             approve = approve_column.form_submit_button("Approve", type="primary")
             reject = reject_column.form_submit_button("Reject")
         if approve or reject:
+            if not save_allowed:
+                return True
             save_review(make_review(order, "approved" if approve else "rejected", comment, built_at))
             st.rerun()
+    return False
 
 
 def table_rows(orders: list[dict]) -> list[dict]:
@@ -136,15 +138,21 @@ def main() -> None:
     st.set_page_config(page_title="Brakwater open orders", layout="wide")
     st.title("Open orders")
 
-    if not DATA_PATH.exists():
+    if not paths.DECISIONS_PATH.exists():
         st.error("No data/decisions.json yet. Build it first: "
                  "docker compose run --rm agent python build_decisions.py")
         st.stop()
-    data = json.loads(DATA_PATH.read_text(encoding="utf-8"))
+    data = json.loads(paths.DECISIONS_PATH.read_text(encoding="utf-8"))
     orders = data["orders"]
     built_at = data["built_at"]
     today = date.fromisoformat(data["business_date"])
     now = datetime.now(timezone.utc)
+
+    # This tab may still show an older build. Streamlit reads the file again on every click, so a click
+    # in such a tab would be saved for the new build, which the buyer has not seen (see view_is_outdated).
+    rebuilt_since_opened = view_is_outdated(st.session_state.get("seen_built_at"), built_at)
+    st.session_state["seen_built_at"] = built_at
+    notice = st.empty()  # filled below, after the cards were handled
 
     st.caption(f"Data built {built_at.replace('T', ' ')} ({describe_age(built_at, now)}) · "
                f"business date {today} · LLM mode: {data['llm_mode']}")
@@ -165,8 +173,16 @@ def main() -> None:
 
     st.header(f"To review ({total})")
     latest = latest_by_po(reviews)
+    click_not_saved = False
     for order in to_review:
-        review_card(order, status_by_po[order["po_number"]], latest.get(order["po_number"]), built_at)
+        not_saved = review_card(order, status_by_po[order["po_number"]], latest.get(order["po_number"]), built_at,
+                                save_allowed=not rebuilt_since_opened)
+        click_not_saved = click_not_saved or not_saved
+    if click_not_saved:
+        notice.warning("The decisions were rebuilt after you opened this page. Your click was NOT saved. "
+                       "You now see the new decisions: read them, then press Approve or Reject again.")
+    elif rebuilt_since_opened:
+        notice.info("The decisions were rebuilt after you opened this page. You now see the new ones.")
 
     no_action = [o for o in orders if o["action"] == "none"]
     with st.expander(f"No action needed ({len(no_action)})"):

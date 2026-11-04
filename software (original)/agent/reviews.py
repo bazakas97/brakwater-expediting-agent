@@ -9,9 +9,8 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 
+import paths
 from view import sort_orders
-
-REVIEWS_PATH = Path(__file__).parent / "data" / "reviews.json"
 
 NEEDS_REVIEW = ["escalate", "chase_supplier", "book_in", "wait"]  # everything except "none"
 VERDICTS = ["approved", "rejected"]
@@ -27,8 +26,9 @@ def orders_to_review(orders: list[dict]) -> list[dict]:
     return sort_orders([o for o in orders if o["action"] in NEEDS_REVIEW])
 
 
-def load_reviews(path: Path = REVIEWS_PATH) -> list[dict]:
+def load_reviews(path: Path | None = None) -> list[dict]:
     """All reviews ever saved, oldest first. No file yet means no reviews."""
+    path = path or paths.REVIEWS_PATH
     if not path.exists():
         return []
     return json.loads(path.read_text(encoding="utf-8"))
@@ -48,13 +48,23 @@ def make_review(order: dict, verdict: str, comment: str, built_at: str, now: dat
     }
 
 
-def save_review(review: dict, path: Path = REVIEWS_PATH) -> None:
+def save_review(review: dict, path: Path | None = None) -> None:
     """Add one review at the end. Earlier reviews stay, so there is a trail. Written in one go."""
+    path = path or paths.REVIEWS_PATH
     reviews = load_reviews(path) + [review]
     path.parent.mkdir(parents=True, exist_ok=True)
     temp_path = path.with_name(path.name + ".tmp")
     temp_path.write_text(json.dumps(reviews, indent=2, ensure_ascii=False), encoding="utf-8")
     os.replace(temp_path, path)
+
+
+def view_is_outdated(seen_built_at: str | None, current_built_at: str) -> bool:
+    """True when the decisions file was rebuilt after this browser tab loaded the page.
+
+    A click in such a tab must NOT be saved: the buyer looked at the old decisions, but the page
+    reads the new file when it handles the click, so the review would be about something he never saw.
+    seen_built_at is None the first time a tab opens the page."""
+    return seen_built_at is not None and seen_built_at != current_built_at
 
 
 def latest_by_po(reviews: list[dict]) -> dict[str, dict]:
